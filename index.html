@@ -10,7 +10,8 @@
             max-width: 800px;
             margin: 20px auto;
             padding: 0 20px;
-            background: #f5f5f5;
+            background: #000;
+            color: #fff;
         }
         #player {
             width: 100%;
@@ -25,18 +26,22 @@
             gap: 10px;
         }
         .video-item {
-            padding: 12px;
-            background: white;
-            border-radius: 6px;
-            cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+         padding: 12px;
+         background: #111;
+         border-radius: 6px;
+         cursor: pointer;
+         box-shadow: 0 1px 3px rgba(255,255,255,0.1);
+         color: #fff;
+}
+
         .video-item:hover {
-            background: #f0f8ff;
-        }
+        background: #222;
+}
+
         .video-item.active {
-            border-left: 4px solid #ff0000;
-            background: #fff0f0;
+        border-left: 4px solid #ff0000;
+        background: #2a0000;
+}
         }
         .error {
             color: red;
@@ -127,7 +132,7 @@
             playlist.forEach((video, index) => {
                 const item = document.createElement('div');
                 item.className = 'video-item';
-                item.innerHTML = `<strong>${video.title}</strong><br><small>ID: ${video.id}</small>`;
+                item.innerHTML = `<strong>${video.title}</strong><br>
                 item.onclick = () => playVideo(video.id, index);
                 container.appendChild(item);
             });
@@ -142,4 +147,5 @@
 </body>
 
 </html>
+
 
