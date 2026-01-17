@@ -1,211 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>YouTube Playlist Player</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 20px auto;
-            padding: 0 20px;
-            background: radial-gradient(circle at top, #111 0%, #000 60%);
-            color: #eee;
-        }
-
-        #player {
-            width: 100%;
-            height: 400px;
-            background: #000;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            border: 1px solid #330000;
-            box-shadow: 0 0 25px rgba(255,0,0,0.25);
-        }
-
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: 6px;
-            border: 1px solid #660000;
-            cursor: pointer;
-            font-weight: bold;
-            background: linear-gradient(180deg, #ff1a1a, #990000);
-            color: #fff;
-        }
-
-        .btn.off {
-            background: linear-gradient(180deg, #333, #111);
-            border-color: #333;
-            color: #aaa;
-        }
-
-        .playlist-container {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .video-item {
-            padding: 14px;
-            background: #111;
-            border-radius: 6px;
-            cursor: pointer;
-            border-left: 4px solid transparent;
-        }
-
-        .video-item.active {
-            border-left: 4px solid #ff0000;
-            background: #2a0000;
-        }
-
-        .error {
-            color: #ff3333;
-            text-align: center;
-            margin-top: 10px;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YouTube Playlist Player</title>
+<style>
+body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 0 20px; background: radial-gradient(circle at top, #111 0%, #000 60%); color: #eee; }
+#player { width: 100%; height: 400px; background: #000; margin-bottom: 15px; border-radius: 8px; border: 1px solid #330000; box-shadow: 0 0 25px rgba(255,0,0,0.25); }
+.controls { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+.btn { padding: 10px 20px; border-radius: 6px; border: 1px solid #660000; cursor: pointer; font-weight: bold; background: linear-gradient(180deg, #ff1a1a, #990000); color: #fff; }
+.btn.off { background: linear-gradient(180deg, #333, #111); border-color: #333; color: #aaa; }
+.playlist-container { display: flex; flex-direction: column; gap: 10px; }
+.video-item { padding: 14px; background: #111; border-radius: 6px; cursor: pointer; border-left: 4px solid transparent; }
+.video-item.active { border-left: 4px solid #ff0000; background: #2a0000; }
+.error { color: #ff3333; text-align: center; margin-top: 10px; }
+</style>
 </head>
-
 <body>
-
 <div id="player"></div>
-
 <div class="controls">
-    <button id="prevBtn" class="btn">⏮ Prev</button>
-    <button id="shuffleBtn" class="btn">🔀 Shuffle: ON</button>
-    <button id="nextBtn" class="btn">⏭ Skip</button>
+<button id="prevBtn" class="btn">⏮ Prev</button>
+<button id="shuffleBtn" class="btn">🔀 Shuffle: ON</button>
+<button id="nextBtn" class="btn">⏭ Skip</button>
 </div>
-
 <div id="error-message" class="error"></div>
 <div id="playlist" class="playlist-container"></div>
-
 <script>
-    const playlist = [
-        { id: 'uwA8Otylwvk', title: 'Annihilator - Masters of Rock 2008' },
-        { id: 'djxrWuLXGyw', title: 'Amon Amarth - Bloodstock 2017' },
-        { id: 'NoIOSQ-TdQM', title: 'Asking Alexandria - Rock Am Ring 2013' },
-        { id: 'KgFKXpNGBaU', title: "Avatar - Poland'Rock Festival 2019" },
-        { id: 'KbvopHPw80c', title: 'Behemoth - Wacken Open Air 2022' }
-    ];
+const playlist = [
+{ id: 'uwA8Otylwvk', title: 'Annihilator - Masters of Rock 2008' },
+{ id: 'djxrWuLXGyw', title: 'Amon Amarth - Bloodstock 2017' },
+{ id: 'NoIOSQ-TdQM', title: 'Asking Alexandria - Rock Am Ring 2013' },
+{ id: 'KgFKXpNGBaU', title: "Avatar - Poland'Rock Festival 2019" },
+{ id: 'KbvopHPw80c', title: 'Behemoth - Wacken Open Air 2022' }
+];
+let player;
+let currentIndex = 0;
+let shuffleEnabled = true;
+let shuffleQueue = [];
+let shufflePos = 0;
 
-    let player;
-    let currentIndex = 0;
+function buildShuffleQueue(startIndex = 0) {
+shuffleQueue = playlist.map((_, i) => i);
+shuffleQueue.sort(() => Math.random() - 0.5);
+// Ensure current song plays first
+const pos = shuffleQueue.indexOf(startIndex);
+[shuffleQueue[0], shuffleQueue[pos]] = [shuffleQueue[pos], shuffleQueue[0]];
+shufflePos = 0;
+}
 
-    let shuffleEnabled = true;
-    let shuffleQueue = [];
-    let shufflePos = 0;
+window.onYouTubeIframeAPIReady = function () {
+player = new YT.Player('player', {
+videoId: playlist[0].id,
+playerVars: {
+'autoplay': 0,
+'controls': 1,
+'rel': 0,
+'showinfo': 0,
+'modestbranding': 1,
+'iv_load_policy': 3,
+'annotations': false,
+'cc_load_policy': 0,
+'advertising': { 'adTagUrl': '' }
+},
+events: {
+onStateChange: onPlayerStateChange,
+onError: onPlayerError
+}
+});
+buildShuffleQueue(0);
+renderPlaylist();
+highlight();
+};
 
-    function buildShuffleQueue(startIndex = 0) {
-        shuffleQueue = playlist.map((_, i) => i);
-        shuffleQueue.sort(() => Math.random() - 0.5);
+function onPlayerStateChange(e) {
+if (e.data === YT.PlayerState.ENDED) playNext();
+}
 
-        // Ensure current song plays first
-        const pos = shuffleQueue.indexOf(startIndex);
-        [shuffleQueue[0], shuffleQueue[pos]] =
-            [shuffleQueue[pos], shuffleQueue[0]];
+function onPlayerError(e) {
+document.getElementById('error-message').textContent = `Playback error (Code ${e.data})`;
+setTimeout(playNext, 1000);
+}
 
-        shufflePos = 0;
-    }
+function playVideo(index) {
+currentIndex = index;
+player.loadVideoById({
+'videoId': playlist[index].id,
+'startSeconds': 0,
+'suggestedQuality': 'large'
+});
+highlight();
+document.getElementById('error-message').textContent = '';
+}
 
-    window.onYouTubeIframeAPIReady = function () {
-        player = new YT.Player('player', {
-            videoId: playlist[0].id,
-            events: {
-                onStateChange: onPlayerStateChange,
-                onError: onPlayerError
-            }
-        });
+function playNext() {
+if (shuffleEnabled) {
+shufflePos++;
+if (shufflePos >= shuffleQueue.length) {
+buildShuffleQueue(currentIndex);
+shufflePos = 1;
+}
+playVideo(shuffleQueue[shufflePos]);
+} else {
+playVideo((currentIndex + 1) % playlist.length);
+}
+}
 
-        buildShuffleQueue(0);
-        renderPlaylist();
-        highlight();
-    };
+function playPrev() {
+if (shuffleEnabled) {
+shufflePos = Math.max(0, shufflePos - 1);
+playVideo(shuffleQueue[shufflePos]);
+} else {
+playVideo( (currentIndex - 1 + playlist.length) % playlist.length );
+}
+}
 
-    function onPlayerStateChange(e) {
-        if (e.data === YT.PlayerState.ENDED) playNext();
-    }
+function highlight() {
+document.querySelectorAll('.video-item').forEach((el, i) => {
+el.classList.toggle('active', i === currentIndex);
+});
+}
 
-    function onPlayerError(e) {
-        document.getElementById('error-message').textContent =
-            `Playback error (Code ${e.data})`;
-        setTimeout(playNext, 1000);
-    }
+function renderPlaylist() {
+const pl = document.getElementById('playlist');
+pl.innerHTML = '';
+playlist.forEach((v, i) => {
+const d = document.createElement('div');
+d.className = 'video-item';
+d.textContent = v.title;
+d.onclick = () => {
+if (shuffleEnabled) buildShuffleQueue(i);
+playVideo(i);
+};
+pl.appendChild(d);
+});
+}
 
-    function playVideo(index) {
-        currentIndex = index;
-        player.loadVideoById(playlist[index].id);
-        highlight();
-        document.getElementById('error-message').textContent = '';
-    }
+document.getElementById('nextBtn').onclick = playNext;
+document.getElementById('prevBtn').onclick = playPrev;
+document.getElementById('shuffleBtn').onclick = function () {
+shuffleEnabled = !shuffleEnabled;
+this.textContent = `🔀 Shuffle: ${shuffleEnabled ? 'ON' : 'OFF'}`;
+this.classList.toggle('off', !shuffleEnabled);
+if (shuffleEnabled) buildShuffleQueue(currentIndex);
+};
 
-    function playNext() {
-        if (shuffleEnabled) {
-            shufflePos++;
-            if (shufflePos >= shuffleQueue.length) {
-                buildShuffleQueue(currentIndex);
-                shufflePos = 1;
-            }
-            playVideo(shuffleQueue[shufflePos]);
-        } else {
-            playVideo((currentIndex + 1) % playlist.length);
-        }
-    }
-
-    function playPrev() {
-        if (shuffleEnabled) {
-            shufflePos = Math.max(0, shufflePos - 1);
-            playVideo(shuffleQueue[shufflePos]);
-        } else {
-            playVideo(
-                (currentIndex - 1 + playlist.length) % playlist.length
-            );
-        }
-    }
-
-    function highlight() {
-        document.querySelectorAll('.video-item').forEach((el, i) => {
-            el.classList.toggle('active', i === currentIndex);
-        });
-    }
-
-    function renderPlaylist() {
-        const pl = document.getElementById('playlist');
-        pl.innerHTML = '';
-        playlist.forEach((v, i) => {
-            const d = document.createElement('div');
-            d.className = 'video-item';
-            d.textContent = v.title;
-            d.onclick = () => {
-                if (shuffleEnabled) buildShuffleQueue(i);
-                playVideo(i);
-            };
-            pl.appendChild(d);
-        });
-    }
-
-    document.getElementById('nextBtn').onclick = playNext;
-    document.getElementById('prevBtn').onclick = playPrev;
-
-    document.getElementById('shuffleBtn').onclick = function () {
-        shuffleEnabled = !shuffleEnabled;
-        this.textContent = `🔀 Shuffle: ${shuffleEnabled ? 'ON' : 'OFF'}`;
-        this.classList.toggle('off', !shuffleEnabled);
-        if (shuffleEnabled) buildShuffleQueue(currentIndex);
-    };
-
-    const tag = document.createElement('script');
-    tag.src = 'https://www.youtube.com/iframe_api';
-    document.body.appendChild(tag);
+const tag = document.createElement('script');
+tag.src = 'https://www.youtube.com/iframe_api';
+document.body.appendChild(tag);
 </script>
-
 </body>
 </html>
