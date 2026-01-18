@@ -14,16 +14,27 @@ body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padd
 .video-item { padding: 14px; background: #111; border-radius: 6px; cursor: pointer; border-left: 4px solid transparent; }
 .video-item.active { border-left: 4px solid #ff0000; background: #2a0000; }
 .error { color: #ff3333; text-align: center; margin-top: 10px; }
+
+/* NEW: dropdown style */
+.channel-select {
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 10px auto;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #660000;
+  background: linear-gradient(180deg, #111, #000);
+  color: #fff;
+  font-weight: bold;
+}
 </style>
 </head>
 <body>
 
 <div id="player"></div>
 
-<!-- CHANNEL BUTTON -->
-<div class="controls" style="margin-bottom: 5px;">
-  <button id="channelBtn" class="btn">📺 Channel: Metal Live</button>
-</div>
+<!-- CHANNEL DROPDOWN -->
+<select id="channelSelect" class="channel-select"></select>
 
 <div class="controls">
   <button id="prevBtn" class="btn">⏮ Prev</button>
@@ -74,15 +85,28 @@ function buildShuffleQueue(startIndex = 0) {
   shufflePos = 0;
 }
 
-function switchChannel() {
-  activeChannel = (activeChannel + 1) % channels.length;
+function switchChannel(channelIndex) {
+  activeChannel = channelIndex;
   playlist = channels[activeChannel].playlist;
   currentIndex = 0;
 
-  document.getElementById('channelBtn').textContent = `📺 Channel: ${channels[activeChannel].name}`;
   buildShuffleQueue(0);
   renderPlaylist();
   playVideo(0);
+}
+
+function renderChannelOptions() {
+  const select = document.getElementById('channelSelect');
+  select.innerHTML = '';
+
+  channels.forEach((ch, idx) => {
+    const opt = document.createElement('option');
+    opt.value = idx;
+    opt.textContent = ch.name;
+    select.appendChild(opt);
+  });
+
+  select.value = activeChannel;
 }
 
 window.onYouTubeIframeAPIReady = function () {
@@ -103,6 +127,8 @@ window.onYouTubeIframeAPIReady = function () {
       onError: onPlayerError
     }
   });
+
+  renderChannelOptions();
   buildShuffleQueue(0);
   renderPlaylist();
   highlight();
@@ -180,7 +206,9 @@ document.getElementById('shuffleBtn').onclick = function () {
   if (shuffleEnabled) buildShuffleQueue(currentIndex);
 };
 
-document.getElementById('channelBtn').onclick = switchChannel;
+document.getElementById('channelSelect').onchange = (e) => {
+  switchChannel(parseInt(e.target.value));
+};
 
 const tag = document.createElement('script');
 tag.src = 'https://www.youtube.com/iframe_api';
